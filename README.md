@@ -50,6 +50,23 @@ That's all. The card now appears by itself each week.
 - 🧹 **Something else is in the Now Bar (Samsung):** in Settings > Lock screen and
   AOD > Now bar, switch off the items you don't want competing with it.
 
+## If power saving turns off your Always On Display
+
+Some phones, Pixels among them, switch the Always On Display off when battery
+saver is on. For those, the app has a screen saver: a dim black screen showing
+the clock and the same words as the card, such as "Shabbos ends 5:17". Between
+Shabbosim it shows the next candle lighting instead. It moves a little each
+minute so nothing burns into the screen.
+
+1. In the app, open **Optional: screen saver** and tap
+   **Open screen saver settings** (or go to Settings > Display > Screen saver).
+2. Choose **Shabbos times**, and set it to start **while charging**.
+3. Leave the phone plugged in over Shabbos.
+
+Android only runs screen savers while the phone is charging or docked, and
+touching the screen ends it, just as with the phone's own clock screen saver.
+Not every phone has screen saver settings.
+
 ## Travelling
 
 The location is set by hand, because the phone may be offline on Shabbos.
@@ -158,6 +175,13 @@ is marked to show through Do Not Disturb.
 
 One exact alarm is set for the next moment anything changes. It is reset after
 a reboot, a clock or time zone change, and an app update.
+
+### How the screen saver works
+
+It is an Android `DreamService` (`ShabbosDream.kt`). Each minute it asks the
+same code that builds the card what the card would say right now, so the two
+always agree. It asks for a dim screen and moves its text to a random spot
+each minute.
 
 ### How the Samsung signals work
 

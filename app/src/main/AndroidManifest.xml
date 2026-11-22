@@ -30,6 +30,21 @@
             </intent-filter>
         </activity>
 
+        <!-- The screen saver, chosen in Settings > Display > Screen saver. -->
+        <service
+            android:name=".ShabbosDream"
+            android:exported="true"
+            android:label="Shabbos times"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.dream"
+                android:resource="@xml/dream" />
+        </service>
+
         <receiver
             android:name=".AlarmReceiver"
             android:exported="true">
