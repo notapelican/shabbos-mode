@@ -190,6 +190,25 @@ class MainActivity : Activity() {
             addView(candleBox)
         })
 
+        // For phones where power saving turns the Always On Display off.
+        page.addView(card {
+            val inside = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            inside.addView(text(
+                "If power saving turns off your Always On Display, leave the phone charging and use " +
+                    "the app's screen saver instead. It shows the clock and the same words as the card, " +
+                    "dimmed, and moves a little each minute so nothing burns in."
+            ))
+            inside.addView(hint(
+                "In the screen saver settings, choose \"Shabbos times\" and set it to start while " +
+                    "charging. Android only runs screen savers while the phone is charging or docked. " +
+                    "Touching the screen ends it."
+            ))
+            inside.addView(button("Open screen saver settings") {
+                open(Intent(Settings.ACTION_DREAM_SETTINGS))
+            }, spaced())
+            addView(submenu("Optional: screen saver", false, inside))
+        })
+
         // Optional: most people never need it.
         page.addView(card {
             addView(label("OPTIONAL: SHABBOS AUTOMATION"))

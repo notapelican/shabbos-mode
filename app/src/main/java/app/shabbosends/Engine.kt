@@ -61,13 +61,8 @@ object Engine {
         } else {
             val place = prefs.place
             val life = current.ends.time - now
-            val showAt = current.candleLighting.time - prefs.leadMinutes * MINUTE
-            // Optional: from a chosen time on the eve, the same card shows candle lighting first.
-            val candleAt = if (prefs.candleCardEnabled) {
-                timeOnDayOf(current.candleLighting, place.timeZone, prefs.candleCardMinutes)
-            } else {
-                Long.MAX_VALUE
-            }
+            val showAt = showAt(prefs, current)
+            val candleAt = candleAt(prefs, current)
             when {
                 now >= showAt -> nm.notify(CARD_ID, buildCard(context, place, current, life))
                 // Same id as the end card, so the changeover updates it in place.
@@ -110,6 +105,44 @@ object Engine {
         }
 
         if (next != Long.MAX_VALUE) schedule(context, next)
+    }
+
+    /** When the "ends" card goes up for a span. */
+    private fun showAt(prefs: Prefs, span: Span): Long =
+        span.candleLighting.time - prefs.leadMinutes * MINUTE
+
+    /** Optional: from a chosen time on the eve, the same card shows candle lighting first. */
+    private fun candleAt(prefs: Prefs, span: Span): Long =
+        if (prefs.candleCardEnabled) {
+            timeOnDayOf(span.candleLighting, prefs.place.timeZone, prefs.candleCardMinutes)
+        } else {
+            Long.MAX_VALUE
+        }
+
+    /**
+     * The words on the card at this moment, or null when no card is up.
+     * The screen saver uses this, so it always agrees with the card.
+     */
+    fun cardText(context: Context, prefs: Prefs, now: Long = System.currentTimeMillis()): String? {
+        val spans = ShabbosCalc.upcoming(prefs.place, Date(now - 7 * DAY), 5, prefs.candleMinutes)
+        val current = spans.firstOrNull { it.ends.time > now } ?: return null
+        return when {
+            now >= showAt(prefs, current) -> cardTitle(context, prefs.place, current, candle = false)
+            now >= candleAt(prefs, current) -> cardTitle(context, prefs.place, current, candle = true)
+            else -> null
+        }
+    }
+
+    /** "Candle lighting 4:16", "Shabbos ends 5:22" or "Yom Tov ends Sun 8:28". */
+    fun cardTitle(context: Context, place: Place, span: Span, candle: Boolean): String {
+        val tz = place.timeZone
+        // Name the day whenever it is not simply "tomorrow night".
+        val endDay = if (span.days > 1 || !span.endsOnShabbos) day(span.ends, tz) + " " else ""
+        return if (candle) {
+            "Candle lighting ${time(context, span.candleLighting, tz, false)}"
+        } else {
+            "${span.label} $endDay${time(context, span.ends, tz, false)}"
+        }
     }
 
     /** Puts the phone into Shabbos mode: the built-in actions, and the Samsung signal if used. */
@@ -162,16 +195,9 @@ object Engine {
         candle: Boolean = false,
     ): Notification {
         val tz = place.timeZone
-        // Name the day whenever it is not simply "tomorrow night".
-        val endDay = if (span.days > 1 || !span.endsOnShabbos) day(span.ends, tz) + " " else ""
-        // One short line and nothing else, so the Now Bar shows all of it:
-        // "Candle lighting 4:16" or "Shabbos ends 5:22".
+        // One short line and nothing else, so the Now Bar shows all of it.
         val shown = if (candle) span.candleLighting else span.ends
-        val title = if (candle) {
-            "Candle lighting ${time(context, shown, tz, false)}"
-        } else {
-            "${span.label} $endDay${time(context, shown, tz, false)}"
-        }
+        val title = cardTitle(context, place, span, candle)
 
         val open = PendingIntent.getActivity(
             context, 0, Intent(context, MainActivity::class.java),
